@@ -7,9 +7,11 @@ import androidx.activity.viewModels
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -22,7 +24,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,6 +47,7 @@ class MainActivity : ComponentActivity() {
 val BackgroundDark = Color(0xFF0F172A)
 val SurfaceDark = Color(0xFF1E293B)
 val AccentBlue = Color(0xFF38BDF8)
+val RingTrack = Color(0xFF334155)
 val StartGreen = Color(0xFF22C55E)
 val StopRed = Color(0xFFEF4444)
 val ResetGray = Color(0xFF64748B)
@@ -74,6 +80,14 @@ fun TimerScreen(viewModel: TimerViewModel) {
         label = "glowAlpha"
     )
 
+    // --- Circular progress ring: fills once per minute, then loops ---
+    val ringTarget = (viewModel.elapsedSeconds % 60) / 60f
+    val ringProgress by animateFloatAsState(
+        targetValue = ringTarget,
+        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+        label = "ringProgress"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -95,22 +109,56 @@ fun TimerScreen(viewModel: TimerViewModel) {
             Spacer(modifier = Modifier.height(24.dp))
 
             Box(
-                modifier = Modifier
-                    .scale(pulseScale)
-                    .background(SurfaceDark, shape = RoundedCornerShape(24.dp))
-                    .border(
-                        width = 3.dp,
-                        color = AccentBlue.copy(alpha = glowAlpha),
-                        shape = RoundedCornerShape(24.dp)
-                    )
-                    .padding(horizontal = 48.dp, vertical = 32.dp)
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(230.dp)
             ) {
-                Text(
-                    text = timeText,
-                    color = AccentBlue,
-                    fontSize = 44.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                // Ring track + progress arc
+                Canvas(modifier = Modifier.size(230.dp)) {
+                    val strokeWidth = 10.dp.toPx()
+                    val ringSize = Size(size.width - strokeWidth, size.height - strokeWidth)
+                    val topLeft = androidx.compose.ui.geometry.Offset(strokeWidth / 2, strokeWidth / 2)
+
+                    // Background track (full circle)
+                    drawArc(
+                        color = RingTrack,
+                        startAngle = -90f,
+                        sweepAngle = 360f,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = ringSize,
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                    )
+                    // Progress arc
+                    drawArc(
+                        color = AccentBlue,
+                        startAngle = -90f,
+                        sweepAngle = 360f * ringProgress,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = ringSize,
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                    )
+                }
+
+                // Time card sits centered inside the ring
+                Box(
+                    modifier = Modifier
+                        .scale(pulseScale)
+                        .background(SurfaceDark, shape = RoundedCornerShape(24.dp))
+                        .border(
+                            width = 3.dp,
+                            color = AccentBlue.copy(alpha = glowAlpha),
+                            shape = RoundedCornerShape(24.dp)
+                        )
+                        .padding(horizontal = 20.dp, vertical = 20.dp)
+                ) {
+                    Text(
+                        text = timeText,
+                        color = AccentBlue,
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(40.dp))
