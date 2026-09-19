@@ -7,15 +7,16 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -34,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -55,6 +57,8 @@ class MainActivity : ComponentActivity() {
 }
 
 val BackgroundDark = Color(0xFF0F172A)
+val BackgroundPurple = Color(0xFF1E1B3A)
+val BackgroundTeal = Color(0xFF0F2E2E)
 val SurfaceDark = Color(0xFF1E293B)
 val AccentBlue = Color(0xFF38BDF8)
 val RingTrack = Color(0xFF334155)
@@ -99,6 +103,27 @@ fun TimerScreen(viewModel: TimerViewModel) {
         label = "ringProgress"
     )
 
+    // --- Color-shifting background, active only while running ---
+    val colorTransition = rememberInfiniteTransition(label = "bgColor")
+    val bgColor1 by colorTransition.animateColor(
+        initialValue = BackgroundDark,
+        targetValue = if (viewModel.isRunning) BackgroundPurple else BackgroundDark,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 6000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bgColor1"
+    )
+    val bgColor2 by colorTransition.animateColor(
+        initialValue = SurfaceDark,
+        targetValue = if (viewModel.isRunning) BackgroundTeal else SurfaceDark,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 8000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bgColor2"
+    )
+
     // --- Milestone message + sound, triggered every full minute ---
     var milestoneText by remember { mutableStateOf("") }
     var showMilestone by remember { mutableStateOf(false) }
@@ -107,14 +132,12 @@ fun TimerScreen(viewModel: TimerViewModel) {
         val totalSeconds = viewModel.elapsedSeconds
 
         if (totalSeconds == 0) {
-            // Timer was reset — make sure banner is hidden
             showMilestone = false
         } else if (totalSeconds % 60 == 0) {
             val minuteCount = totalSeconds / 60
             milestoneText = "🔥 $minuteCount minute${if (minuteCount > 1) "s" else ""} focused!"
             showMilestone = true
 
-            // Play a short beep
             val toneGen = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
             toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 500)
             delay(600)
@@ -128,7 +151,11 @@ fun TimerScreen(viewModel: TimerViewModel) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundDark),
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(bgColor1, bgColor2)
+                )
+            ),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -145,7 +172,6 @@ fun TimerScreen(viewModel: TimerViewModel) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Milestone banner — fades in/out above the ring
             AnimatedVisibility(visible = showMilestone, enter = fadeIn(), exit = fadeOut()) {
                 Text(
                     text = milestoneText,
