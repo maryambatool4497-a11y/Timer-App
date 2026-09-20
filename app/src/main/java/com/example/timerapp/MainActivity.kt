@@ -51,7 +51,53 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            TimerScreen(viewModel)
+            AppRoot(viewModel)
+        }
+    }
+}
+
+@Composable
+fun AppRoot(viewModel: TimerViewModel) {
+    var currentScreen by remember { mutableStateOf("stopwatch") }
+
+    when (currentScreen) {
+        "stopwatch" -> TimerScreen(
+            viewModel = viewModel,
+            onSetTimerClick = { currentScreen = "setTimer" }
+        )
+        "setTimer" -> SetTimerScreen(
+            onBackClick = { currentScreen = "stopwatch" }
+        )
+    }
+}
+
+@Composable
+fun SetTimerScreen(onBackClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundDark),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Set Timer Screen (coming soon)",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = onBackClick,
+                colors = ButtonDefaults.buttonColors(containerColor = ResetGray)
+            ) {
+                Text("Back", color = Color.White)
+            }
         }
     }
 }
@@ -68,13 +114,12 @@ val ResetGray = Color(0xFF64748B)
 val MilestoneGold = Color(0xFFFACC15)
 
 @Composable
-fun TimerScreen(viewModel: TimerViewModel) {
+fun TimerScreen(viewModel: TimerViewModel, onSetTimerClick: () -> Unit) {
     val hours = viewModel.elapsedSeconds / 3600
     val minutes = (viewModel.elapsedSeconds % 3600) / 60
     val seconds = viewModel.elapsedSeconds % 60
     val timeText = String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, seconds)
 
-    // --- Pulsing glow animation, active only while running ---
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -95,7 +140,6 @@ fun TimerScreen(viewModel: TimerViewModel) {
         label = "glowAlpha"
     )
 
-    // --- Circular progress ring: fills once per minute, then loops ---
     val ringTarget = (viewModel.elapsedSeconds % 60) / 60f
     val ringProgress by animateFloatAsState(
         targetValue = ringTarget,
@@ -103,7 +147,6 @@ fun TimerScreen(viewModel: TimerViewModel) {
         label = "ringProgress"
     )
 
-    // --- Color-shifting background, active only while running ---
     val colorTransition = rememberInfiniteTransition(label = "bgColor")
     val bgColor1 by colorTransition.animateColor(
         initialValue = BackgroundDark,
@@ -124,7 +167,6 @@ fun TimerScreen(viewModel: TimerViewModel) {
         label = "bgColor2"
     )
 
-    // --- Milestone message + sound, triggered every full minute ---
     var milestoneText by remember { mutableStateOf("") }
     var showMilestone by remember { mutableStateOf(false) }
 
@@ -254,6 +296,15 @@ fun TimerScreen(viewModel: TimerViewModel) {
                 ) {
                     Text("Reset", color = Color.White)
                 }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = onSetTimerClick,
+                colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
+            ) {
+                Text("Set Timer", color = Color.White)
             }
         }
     }
