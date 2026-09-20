@@ -23,6 +23,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,6 +35,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
@@ -92,6 +95,20 @@ fun SetTimerScreen(onBackClick: () -> Unit, onStartClick: (Int) -> Unit) {
     var selectedMinutes by remember { mutableStateOf(0) }
     var selectedSeconds by remember { mutableStateOf(0) }
 
+    val hoursListState = rememberLazyListState()
+    val minutesListState = rememberLazyListState()
+    val secondsListState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
+    fun applyPreset(hours: Int, minutes: Int, seconds: Int) {
+        selectedHours = hours
+        selectedMinutes = minutes
+        selectedSeconds = seconds
+        coroutineScope.launch { hoursListState.animateScrollToItem(hours) }
+        coroutineScope.launch { minutesListState.animateScrollToItem(minutes) }
+        coroutineScope.launch { secondsListState.animateScrollToItem(seconds) }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -110,13 +127,37 @@ fun SetTimerScreen(onBackClick: () -> Unit, onStartClick: (Int) -> Unit) {
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = { applyPreset(0, 1, 0) },
+                    colors = ButtonDefaults.buttonColors(containerColor = SurfaceDark)
+                ) {
+                    Text("1 min", color = AccentBlue, fontSize = 13.sp)
+                }
+                Button(
+                    onClick = { applyPreset(0, 5, 0) },
+                    colors = ButtonDefaults.buttonColors(containerColor = SurfaceDark)
+                ) {
+                    Text("5 min", color = AccentBlue, fontSize = 13.sp)
+                }
+                Button(
+                    onClick = { applyPreset(0, 10, 0) },
+                    colors = ButtonDefaults.buttonColors(containerColor = SurfaceDark)
+                ) {
+                    Text("10 min", color = AccentBlue, fontSize = 13.sp)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 NumberPicker(
+                    listState = hoursListState,
                     range = 0..23,
                     selectedValue = selectedHours,
                     onValueChange = { selectedHours = it },
@@ -124,6 +165,7 @@ fun SetTimerScreen(onBackClick: () -> Unit, onStartClick: (Int) -> Unit) {
                 )
                 Text(":", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
                 NumberPicker(
+                    listState = minutesListState,
                     range = 0..59,
                     selectedValue = selectedMinutes,
                     onValueChange = { selectedMinutes = it },
@@ -131,6 +173,7 @@ fun SetTimerScreen(onBackClick: () -> Unit, onStartClick: (Int) -> Unit) {
                 )
                 Text(":", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
                 NumberPicker(
+                    listState = secondsListState,
                     range = 0..59,
                     selectedValue = selectedSeconds,
                     onValueChange = { selectedSeconds = it },
@@ -164,12 +207,12 @@ fun SetTimerScreen(onBackClick: () -> Unit, onStartClick: (Int) -> Unit) {
 
 @Composable
 fun NumberPicker(
+    listState: LazyListState,
     range: IntRange,
     selectedValue: Int,
     onValueChange: (Int) -> Unit,
     label: String
 ) {
-    val listState = rememberLazyListState()
     val itemHeight = 48.dp
     val visibleItemsCount = 3
     var isInitialized by remember { mutableStateOf(false) }
