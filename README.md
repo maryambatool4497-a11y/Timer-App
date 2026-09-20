@@ -1,11 +1,42 @@
 # Timer App
 
-A simple Android timer app built with Kotlin and Jetpack Compose. Supports start, stop, and reset, and keeps counting correctly even when the screen rotates.
+A simple and user-friendly Android Timer App built with **Kotlin** and **Jetpack Compose**.
 
-## Screenshot
+The app was developed from a basic timer into a more feature-rich timer and stopwatch application.
+
+## Final App
 
 ![Timer App Screenshot](screenshot.png)
 
+## Features
+
+- Start, Stop, and Reset timer
+- Timer state preserved during screen rotation
+- Pulsing glow animation
+- Circular progress ring
+- Minute milestone message with beep
+- Stopwatch and Set Timer navigation
+- Countdown timer with hours, minutes, and seconds picker
+- Countdown completion alert
+- Quick 1, 5, and 10-minute presets
+
+## Development Screenshots
+
+The `screenshots` folder contains screenshots showing the different stages and features added during development.
+
 ## Project Structure
 
-This app has two main files. `TimerViewModel.kt` holds all the timer logic and state (elapsed seconds, running status) — using a ViewModel here means the state survives configuration changes like screen rotation, since Android keeps the ViewModel instance alive even when the Activity is destroyed and recreated. `MainActivity.kt` contains the Compose UI: a `TimerScreen` composable that displays the formatted time, a heading, and three buttons (Start/Stop/Reset) wired to functions on the ViewModel. The UI observes the ViewModel's state directly using Compose's `mutableStateOf`, so the screen automatically recomposes whenever the timer updates.
+- `MainActivity.kt` — Compose UI and app screens
+- `TimerViewModel.kt` — Timer logic and state management
+- `screenshots/` — Development screenshots
+
+## Technologies
+
+- **Kotlin**
+- **Jetpack Compose**
+- **Android Studio**
+- **ViewModel**
+
+## Project
+
+Developed as part of my **Mobile Application Development** coursework.
